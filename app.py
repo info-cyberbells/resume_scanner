@@ -28,128 +28,150 @@ st.set_page_config(page_title="Resume Analysis AI", layout="wide", initial_sideb
 
 # --- Custom CSS for Beautiful UI ---
 def local_css():
-    primary_color = "#FF4B4B" # Streamlit's default red, works well for light theme
-    background_color = "#FFFFFF" # White background
-    secondary_background_color = "#F0F2F6" # Light grey for secondary elements like input fields
-    text_color = "#262730" # Dark text for contrast
-    card_background = "#FFFFFF"
-    card_border = "#E0E0E0" # Light border for cards
-    metric_background = "#F0F2F6" # Light grey background for metrics
+    primary_color = "#9945ff" # Purple from gradient
+    accent_color = "#ff45b4" # Pink from gradient
 
     st.markdown(f"""
     <style>
-    /* General body styling */
-    .stApp {{
-        background-color: {background_color} !important;
-        color: {text_color} !important;
-    }}
+    @media (prefers-color-scheme: light) {{
+        /* General body styling */
+        .stApp {{
+            color: #262730 !important;
+        }}
 
-    /* Headers */
-    h1, h2, h3, h4, h5, h6 {{
-        color: {text_color} !important;
-    }}
+        /* Headers */
+        h1, h2, h3, h4, h5, h6 {{
+            color: #262730 !important;
+        }}
 
-    /* Input fields and select boxes */
-    .stTextInput>div>div>input,
-    .stTextArea>div>div>textarea,
-    .stSelectbox>div>div,
-    .stNumberInput>div>div>input {{
-        color: {text_color}; /* Dark text color for inputs */
-        background-color: {secondary_background_color}; /* Light background for inputs */
-        border: 1px solid {card_border}; /* Consistent border */
-    }}
+        /* Input fields and select boxes */
+        .stTextInput>div>div>input,
+        .stTextArea>div>div>textarea,
+        .stSelectbox>div>div,
+        .stNumberInput>div>div>input {{
+            color: #262730;
+            border: 1px solid #E0E0E0;
+        }}
 
-    /* Text elements */
-    .stMarkdown, .stText, .stJson, p, li {{
-        color: {text_color} !important;
-    }}
+        /* Text elements */
+        .stMarkdown, .stText, .stJson, p, li {{
+            color: #262730 !important;
+        }}
 
-    /* Card-like containers */
-    .card {{
-        background-color: {card_background};
-        border-radius: 10px;
-        padding: 20px;
-        margin: 10px 0;
-        box-shadow: 0 4px 8px 0 rgba(0,0,0,0.05); /* Lighter shadow for light theme */
-        transition: 0.3s;
-        border: 1px solid {card_border};
-    }}
-    .card:hover {{
-        box-shadow: 0 8px 16px 0 rgba(0,0,0,0.1);
-        border: 1px solid {primary_color};
-    }}
+        /* Card-like containers */
+        .card {{
+            border-radius: 10px;
+            padding: 20px;
+            margin: 10px 0;
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.05); /* Lighter shadow for light theme */
+            transition: 0.3s;
+            border: 1px solid #E0E0E0;
+        }}
+        .card:hover {{
+            box-shadow: 0 8px 16px 0 rgba(153, 69, 255, 0.3);
+            border: 2px solid {primary_color};
+        }}
 
-    /* Metric styles */
-    .stMetric {{
-        background-color: {metric_background};
-        border-radius: 8px;
-        padding: 15px;
-        text-align: center;
-        border: 1px solid {card_border}; /* Consistent border for metrics */
-    }}
-    .stMetric > div > div > div {{ /* Target metric value and label */
-        color: {text_color} !important;
-    }}
+        /* Metric styles */
+        .stMetric {{
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid #E0E0E0; /* Consistent border for metrics */
+        }}
+        .stMetric > div > div > div {{ /* Target metric value and label */
+            color: #262730 !important;
+        }}
 
-    /* Expander styling */
-    .stExpander {{
-        border-radius: 8px !important;
-        border: 1px solid {card_border} !important;
-    }}
-    .stExpander details summary p {{
-        color: {text_color} !important; /* Ensure expander header text is dark */
-    }}
-    
-    /* Button styling */
-    .stButton>button {{
-        border-radius: 8px;
-        border: 1px solid {primary_color};
-        color: {primary_color};
-        background-color: {background_color}; /* Button background matches app background */
-    }}
-    .stButton>button:hover {{
-        border-color: {primary_color};
-        background-color: {primary_color};
-        color: #fff; /* White text on hover for contrast */
-    }}
+        /* Expander styling */
+        .stExpander {{
+            border-radius: 8px !important;
+            border: 1px solid #E0E0E0 !important;
+        }}
+        .stExpander details summary p {{
+            color: #262730 !important; /* Ensure expander header text is dark */
+        }}
+        
+        /* Button styling */
+        .stButton>button {{
+            border-radius: 8px;
+            border: 2px solid {primary_color};
+            color: {primary_color}; /* Change text color to primary_color for contrast */
+            background: transparent; /* Remove gradient, use default background */
+            font-weight: 600;
+        }}
+        .stButton>button:hover {{
+            border-color: {accent_color};
+            color: {accent_color}; /* Change text color on hover */
+            background: transparent;
+            box-shadow: 0 4px 15px rgba(153, 69, 255, 0.4);
+        }}
 
-    /* Plot style */
-    .stPlotlyChart {{
-        border-radius: 10px;
-    }}
-    
-    /* Tabs styling */
-    .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {{
-        font-size: 1.2rem;
-        color: {text_color} !important; /* Ensure tab titles are dark */
-    }}
-    .stTabs [data-baseweb="tab-list"] button {{
-        background-color: {secondary_background_color}; /* Light background for tabs */
-        border-radius: 8px 8px 0 0;
-        border-bottom: none;
-    }}
-    .stTabs [data-baseweb="tab-list"] button[aria-selected="true"] {{
-        border-top: 2px solid {primary_color}; /* Highlight active tab */
-        color: {text_color};
-        background-color: {background_color}; /* Active tab matches main app background */
-    }}
-    .stTabs [data-baseweb="tab-list"] {{
-        background-color: {secondary_background_color}; /* Background for tab bar */
-        border-radius: 8px;
-    }}
-    .stTabs [data-baseweb="tab-panel"] {{
-        background-color: {background_color}; /* Tab content matches app background */
-    }}
+        /* Plot style */
+        .stPlotlyChart {{
+            border-radius: 10px;
+        }}
+        
+        /* Tabs styling */
+        .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {{
+            font-size: 1.1rem !important;
+            color: #262730 !important; /* Ensure tab titles are dark */
+        }}
+        .stTabs [data-baseweb="tab-list"] button {{
+            padding: 9px 15px !important;
+            margin-right: -15px; /* Adjust spacing between tabs */
+            border-radius: 8px 8px 0 0;
+            border-bottom: none;
+        }}
+        .stTabs [data-baseweb="tab-list"] button[aria-selected="true"] {{
+            color: #262730;
+            
+        }}
+        .stTabs [data-baseweb="tab-list"] {{
+            border-radius: 8px;
+        }}
+        .stTabs [data-baseweb="tab-panel"] {{
+            /* No background set for default browser color */
+        }}
 
 
-    /* Info, Success, Warning, Error boxes */
-    .stAlert {{
-        color: {text_color} !important; /* Ensure alert text is dark */
-        background-color: {secondary_background_color} !important; /* Light background for alerts */
-        border-color: {card_border} !important;
+        /* Info, Success, Warning, Error boxes */
+        .stAlert {{
+            color: #262730 !important; /* Ensure alert text is dark */
+            border-color: #E0E0E0 !important;
+        }}
+        .stAlert > div > div {{
+            color: #262730 !important;
+        }}
     }}
-    .stAlert > div > div {{
-        color: {text_color} !important;
+
+    @media (prefers-color-scheme: dark) {{
+        /* General body styling */
+        .stApp,
+        h1, h2, h3, h4, h5, h6,
+        .stTextInput>div>div>input,
+        .stTextArea>div>div>textarea,
+        .stSelectbox>div>div,
+        .stNumberInput>div>div>input,
+        .stMarkdown, .stText, .stJson, p, li,
+        .stMetric > div > div > div,
+        .stExpander details summary p,
+        .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p,
+        .stTabs [data-baseweb="tab-list"] button[aria-selected="true"],
+        .stTabs [data-baseweb="tab-list"],
+        .stTabs [data-baseweb="tab-panel"],
+        .stAlert,
+        .stAlert > div > div
+        {{
+            color: white !important;
+        }}
+        /* Adjust button text color for dark mode to remain visible */
+        .stButton>button {{
+            color: white !important;
+        }}
+        .stButton>button:hover {{
+            color: white !important;
+        }}
     }}
     </style>
     """, unsafe_allow_html=True)
@@ -164,21 +186,50 @@ def ensure_uploads_dir():
 def display_dashboard(all_resumes: List[Resume]):
     st.subheader("📊 Recruiter Dashboard")
     st.markdown("---")
-    st.markdown("#### Key Metrics")
-
-    col1, col2, col3 = st.columns(3)
+    
     experience_levels = [r.experience for r in all_resumes if r.experience is not None and r.experience > 0]
     all_skills = [skill.lower() for resume in all_resumes for skill in resume.skills]
     all_locations = [r.location for r in all_resumes if r.location]
 
+    col1, col2, col3, col4 = st.columns(4)
+    
     with col1:
-        st.metric("Total Resumes", len(all_resumes))
+        with st.container():
+            st.markdown("""
+            <div style="background: linear-gradient(135deg, #9945ff 0%, #ff45b4 100%); padding: 20px; border-radius: 10px; color: white; text-align: center; box-shadow: 0 4px 15px rgba(153, 69, 255, 0.3);">
+                <div style="font-size: 24px; font-weight: bold;">""" + str(len(all_resumes)) + """</div>
+                <div style="font-size: 14px; margin-top: 8px; opacity: 0.9;">Total Candidates</div>
+            </div>
+            """, unsafe_allow_html=True)
+    
     with col2:
         avg_exp = round(np.mean(experience_levels), 1) if experience_levels else 0
-        st.metric("Avg. Experience (Years)", avg_exp)
+        with st.container():
+            st.markdown("""
+            <div style="background: linear-gradient(135deg, #9945ff 0%, #ff45b4 100%); padding: 20px; border-radius: 10px; color: white; text-align: center; box-shadow: 0 4px 15px rgba(153, 69, 255, 0.3);">
+                <div style="font-size: 24px; font-weight: bold;">""" + str(avg_exp) + """ yrs</div>
+                <div style="font-size: 14px; margin-top: 8px; opacity: 0.9;">Avg Experience</div>
+            </div>
+            """, unsafe_allow_html=True)
+    
     with col3:
-        st.metric("Total Skills Found", len(set(all_skills)))
-
+        with st.container():
+            st.markdown("""
+            <div style="background: linear-gradient(135deg, #9945ff 0%, #ff45b4 100%); padding: 20px; border-radius: 10px; color: white; text-align: center; box-shadow: 0 4px 15px rgba(153, 69, 255, 0.3);">
+                <div style="font-size: 24px; font-weight: bold;">""" + str(len(set(all_skills))) + """</div>
+                <div style="font-size: 14px; margin-top: 8px; opacity: 0.9;">Unique Skills</div>
+            </div>
+            """, unsafe_allow_html=True)
+    
+    with col4:
+        with st.container():
+            st.markdown("""
+            <div style="background: linear-gradient(135deg, #9945ff 0%, #ff45b4 100%); padding: 20px; border-radius: 10px; color: white; text-align: center; box-shadow: 0 4px 15px rgba(153, 69, 255, 0.3);">
+                <div style="font-size: 24px; font-weight: bold;">""" + str(len(set(all_locations))) + """</div>
+                <div style="font-size: 14px; margin-top: 8px; opacity: 0.9;">Unique Locations</div>
+            </div>
+            """, unsafe_allow_html=True)
+    
     st.markdown("---")
     st.markdown("#### Visualizations")
 
@@ -512,9 +563,9 @@ def new_run_search(search_criteria: Dict[str, Any]) -> Tuple[List[Dict[str, Any]
 # --- App Execution ---
 if __name__ == "__main__":
     ensure_uploads_dir()
-    local_css()
 
     st.title("✨ AI-Powered Resume Analysis")
+    local_css()
 
     # --- Sidebar for Uploads ---
     with st.sidebar:

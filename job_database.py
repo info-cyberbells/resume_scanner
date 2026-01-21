@@ -4,7 +4,7 @@ from bson.objectid import ObjectId
 from models import Job
 
 # --- Database Configuration ---
-MONGO_DETAILS = os.environ.get("MONGO_DETAILS", "mongodb://localhost:27017")
+MONGO_DETAILS = "mongodb+srv://infocyberbells:URgCpmEAgksetiiI@cyberbellsmongocluster.vy8xm.mongodb.net/resumes?retryWrites=true&w=majority"
 client = MongoClient(MONGO_DETAILS)
 database = client.resumes  # Using the same database
 job_collection = database.get_collection("job_collection")
