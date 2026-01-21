@@ -28,62 +28,129 @@ st.set_page_config(page_title="Resume Analysis AI", layout="wide", initial_sideb
 
 # --- Custom CSS for Beautiful UI ---
 def local_css():
-    st.markdown("""
+    primary_color = "#FF4B4B" # Streamlit's default red, works well for light theme
+    background_color = "#FFFFFF" # White background
+    secondary_background_color = "#F0F2F6" # Light grey for secondary elements like input fields
+    text_color = "#262730" # Dark text for contrast
+    card_background = "#FFFFFF"
+    card_border = "#E0E0E0" # Light border for cards
+    metric_background = "#F0F2F6" # Light grey background for metrics
+
+    st.markdown(f"""
     <style>
     /* General body styling */
-    .stApp {
-        background-color: #0E1117 !important; /* Enforce dark background */
-    }
+    .stApp {{
+        background-color: {background_color} !important;
+        color: {text_color} !important;
+    }}
+
+    /* Headers */
+    h1, h2, h3, h4, h5, h6 {{
+        color: {text_color} !important;
+    }}
+
+    /* Input fields and select boxes */
+    .stTextInput>div>div>input,
+    .stTextArea>div>div>textarea,
+    .stSelectbox>div>div,
+    .stNumberInput>div>div>input {{
+        color: {text_color}; /* Dark text color for inputs */
+        background-color: {secondary_background_color}; /* Light background for inputs */
+        border: 1px solid {card_border}; /* Consistent border */
+    }}
+
+    /* Text elements */
+    .stMarkdown, .stText, .stJson, p, li {{
+        color: {text_color} !important;
+    }}
 
     /* Card-like containers */
-    .card {
-        background-color: #262730;
+    .card {{
+        background-color: {card_background};
         border-radius: 10px;
         padding: 20px;
         margin: 10px 0;
-        box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+        box-shadow: 0 4px 8px 0 rgba(0,0,0,0.05); /* Lighter shadow for light theme */
         transition: 0.3s;
-        border: 1px solid #444;
-    }
-    .card:hover {
-        box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
-        border: 1px solid #f63366;
-    }
+        border: 1px solid {card_border};
+    }}
+    .card:hover {{
+        box-shadow: 0 8px 16px 0 rgba(0,0,0,0.1);
+        border: 1px solid {primary_color};
+    }}
 
     /* Metric styles */
-    .stMetric {
-        background-color: #333;
+    .stMetric {{
+        background-color: {metric_background};
         border-radius: 8px;
         padding: 15px;
         text-align: center;
-    }
+        border: 1px solid {card_border}; /* Consistent border for metrics */
+    }}
+    .stMetric > div > div > div {{ /* Target metric value and label */
+        color: {text_color} !important;
+    }}
 
     /* Expander styling */
-    .stExpander {
+    .stExpander {{
         border-radius: 8px !important;
-        border: 1px solid #444 !important;
-    }
+        border: 1px solid {card_border} !important;
+    }}
+    .stExpander details summary p {{
+        color: {text_color} !important; /* Ensure expander header text is dark */
+    }}
     
     /* Button styling */
-    .stButton>button {
+    .stButton>button {{
         border-radius: 8px;
-        border: 1px solid #f63366;
-        color: #f63366;
-    }
-    .stButton>button:hover {
-        border-color: #fff;
-        color: #fff;
-    }
+        border: 1px solid {primary_color};
+        color: {primary_color};
+        background-color: {background_color}; /* Button background matches app background */
+    }}
+    .stButton>button:hover {{
+        border-color: {primary_color};
+        background-color: {primary_color};
+        color: #fff; /* White text on hover for contrast */
+    }}
 
     /* Plot style */
-    .stPlotlyChart {
+    .stPlotlyChart {{
         border-radius: 10px;
-    }
+    }}
     
-    .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {
+    /* Tabs styling */
+    .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {{
         font-size: 1.2rem;
-    }
+        color: {text_color} !important; /* Ensure tab titles are dark */
+    }}
+    .stTabs [data-baseweb="tab-list"] button {{
+        background-color: {secondary_background_color}; /* Light background for tabs */
+        border-radius: 8px 8px 0 0;
+        border-bottom: none;
+    }}
+    .stTabs [data-baseweb="tab-list"] button[aria-selected="true"] {{
+        border-top: 2px solid {primary_color}; /* Highlight active tab */
+        color: {text_color};
+        background-color: {background_color}; /* Active tab matches main app background */
+    }}
+    .stTabs [data-baseweb="tab-list"] {{
+        background-color: {secondary_background_color}; /* Background for tab bar */
+        border-radius: 8px;
+    }}
+    .stTabs [data-baseweb="tab-panel"] {{
+        background-color: {background_color}; /* Tab content matches app background */
+    }}
 
+
+    /* Info, Success, Warning, Error boxes */
+    .stAlert {{
+        color: {text_color} !important; /* Ensure alert text is dark */
+        background-color: {secondary_background_color} !important; /* Light background for alerts */
+        border-color: {card_border} !important;
+    }}
+    .stAlert > div > div {{
+        color: {text_color} !important;
+    }}
     </style>
     """, unsafe_allow_html=True)
 
@@ -115,8 +182,8 @@ def display_dashboard(all_resumes: List[Resume]):
     st.markdown("---")
     st.markdown("#### Visualizations")
 
-    # Use a dark theme for plots
-    plt.style.use('dark_background')
+    # Use a default theme for plots
+    plt.style.use('default')
 
     col_viz1, col_viz2 = st.columns(2)
     with col_viz1:
