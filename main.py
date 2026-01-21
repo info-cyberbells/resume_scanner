@@ -2,7 +2,7 @@ from fastapi import FastAPI, File, UploadFile, HTTPException
 from typing import List
 import os
 from database import add_resume, retrieve_resumes
-from models import Resume, JobDescription
+from models import Resume, Job
 from resume_parser import parse_resume
 from recommendation import get_recommendations
 
@@ -25,7 +25,7 @@ async def upload_resume(file: UploadFile = File(...)):
         os.remove(file_location)
 
 @app.post("/recommend_resumes/", response_model=List[dict])
-async def recommend_resumes(job_description: JobDescription):
+async def recommend_resumes(job: Job):
     resumes = await retrieve_resumes()
     recommendations = get_recommendations(job_description, resumes)
     return recommendations
