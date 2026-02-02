@@ -1,5 +1,6 @@
 fastapi==0.128.0
 uvicorn==0.40.0
+python-dotenv
 python-multipart==0.0.21
 pdfplumber==0.11.9
 pymongo==4.15.5
@@ -50,5 +51,3 @@ urllib3==2.6.2
 pycparser==2.23
 httpcore==1.0.9
 spacy==3.7.2
-wordcloud
-matplotlib
