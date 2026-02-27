@@ -5,9 +5,10 @@ from bson.objectid import ObjectId
 from models import Resume
 
 # --- Database Configuration ---
-MONGO_DETAILS = "mongodb+srv://infocyberbells:URgCpmEAgksetiiI@cyberbellsmongocluster.vy8xm.mongodb.net/resumes?retryWrites=true&w=majority&serverSelectionTimeoutMS=5000&connectTimeoutMS=5000"
+# Replace with your MongoDB connection string
+MONGO_DETAILS = os.environ.get("MONGO_DETAILS", "mongodb://localhost:27017")
 client = MongoClient(MONGO_DETAILS)
-database = client.get_database()  
+database = client.resumes
 resume_collection = database.get_collection("resume_collection")
 
 
@@ -52,61 +53,12 @@ def resume_helper(resume) -> dict:
 
 # --- CRUD Operations ---
 
-def retrieve_resumes(recruiter_id: str = None, company_id: str = None):
+def retrieve_resumes():
     """
-    Retrieves resumes from the database, filtering for a company and recruiter.
-    """
-    query_parts = []
-    
-    # Filter for resumes visible to the company
-    if company_id:
-        query_parts.append({
-            "$or": [
-                {"visible_to_companies": company_id},
-                {"visible_to_companies": {"$exists": False}},
-                {"visible_to_companies": {"$size": 0}}
-            ]
-        })
-
-    # Filter out resumes hidden by the individual recruiter
-    if recruiter_id:
-        query_parts.append({"hidden_from": {"$ne": recruiter_id}})
-        
-    query = {}
-    if query_parts:
-        query = {"$and": query_parts}
-        
-    resumes = []
-    for resume in resume_collection.find(query):
-        resumes.append(resume_helper(resume))
-    return resumes
-
-
-def retrieve_resumes_by_user(user_id: str):
-    """
-    Retrieves all resumes for a specific user.
+    Retrieves all resumes present in the database.
     """
     resumes = []
-    for resume in resume_collection.find({"user_id": user_id}):
-        resumes.append(resume_helper(resume))
-    return resumes
-
-def retrieve_resumes_by_company(company_id: str) -> list:
-    """
-    Retrieves all resumes visible to a specific company.
-    """
-    resumes = []
-    # Query for resumes where the company_id is in visible_to_companies
-    # Or resumes that have no visible_to_companies field (implicitly visible to all)
-    # Or resumes where visible_to_companies is an empty array
-    query = {
-        "$or": [
-            {"visible_to_companies": company_id},
-            {"visible_to_companies": {"$exists": False}},
-            {"visible_to_companies": {"$size": 0}}
-        ]
-    }
-    for resume in resume_collection.find(query):
+    for resume in resume_collection.find():
         resumes.append(resume_helper(resume))
     return resumes
 
@@ -127,19 +79,6 @@ def update_resume_workflow(id: str, status: str, notes: str):
         resume_collection.update_one(
             {"_id": ObjectId(id)},
             {"$set": {"status": status, "notes": notes}}
-        )
-        return True
-    except Exception:
-        return False
-
-def hide_resume_for_recruiter(resume_id: str, recruiter_id: str):
-    """
-    Hides a resume from a specific recruiter's view (soft delete).
-    """
-    try:
-        resume_collection.update_one(
-            {"_id": ObjectId(resume_id)},
-            {"$addToSet": {"hidden_from": recruiter_id}}
         )
         return True
     except Exception:

@@ -1,26 +1,8 @@
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 from models import Job, Resume
 from typing import List
 from difflib import SequenceMatcher
-
-# Lazy-load sklearn modules to avoid blocking imports
-_sklearn_ready = False
-TfidfVectorizer = None
-cosine_similarity = None
-
-def _ensure_sklearn():
-    """Lazy-load sklearn modules on first use"""
-    global TfidfVectorizer, cosine_similarity, _sklearn_ready
-    if not _sklearn_ready:
-        try:
-            from sklearn.feature_extraction.text import TfidfVectorizer as TfIdf
-            from sklearn.metrics.pairwise import cosine_similarity as cos_sim
-            TfidfVectorizer = TfIdf
-            cosine_similarity = cos_sim
-            _sklearn_ready = True
-        except Exception as e:
-            import logging
-            logging.error(f"Failed to load sklearn: {e}")
-            _sklearn_ready = True
 
 # --- Scoring Configuration ---
 WEIGHTS = {
@@ -37,26 +19,18 @@ def _calculate_skill_score(job_skills: List[str], resume_skills: List[str]) -> f
     if not job_skills or not resume_skills:
         return 0.0
 
-    try:
-        _ensure_sklearn()  # Lazy-load sklearn if not already done
-        if not TfidfVectorizer or not cosine_similarity:
-            return 0.0
-            
-        # The vectorizer needs strings, so we join the lists of skills
-        job_skills_str = " ".join(job_skills)
-        resume_skills_str = " ".join(resume_skills)
+    # The vectorizer needs strings, so we join the lists of skills
+    job_skills_str = " ".join(job_skills)
+    resume_skills_str = " ".join(resume_skills)
 
-        vectorizer = TfidfVectorizer().fit_transform([job_skills_str, resume_skills_str])
-        vectors = vectorizer.toarray()
-        
-        similarity = cosine_similarity(vectors)
-        # The similarity of the two items is in the off-diagonal
-        score = similarity[0][1]
-        
-        return score * 100
-    except Exception:
-        # If TF-IDF fails, return 0
-        return 0.0
+    vectorizer = TfidfVectorizer().fit_transform([job_skills_str, resume_skills_str])
+    vectors = vectorizer.toarray()
+    
+    similarity = cosine_similarity(vectors)
+    # The similarity of the two items is in the off-diagonal
+    score = similarity[0][1]
+    
+    return score * 100
 
 def _calculate_experience_score(required_exp: int, resume_exp: int | None) -> float:
     """

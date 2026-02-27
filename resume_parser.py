@@ -4,19 +4,12 @@ import spacy
 from spacy.matcher import Matcher, PhraseMatcher
 from models import Resume
 
-# Load the spaCy model lazily (on first use)
-nlp = None
-
-def _get_nlp():
-    """Lazy-load the spaCy model on first use"""
-    global nlp
-    if nlp is None:
-        try:
-            nlp = spacy.load("en_core_web_sm")
-        except OSError:
-            import en_core_web_sm
-            nlp = en_core_web_sm.load()
-    return nlp
+# Load the spaCy model
+try:
+    nlp = spacy.load("en_core_web_sm")
+except OSError:
+    import en_core_web_sm
+    nlp = en_core_web_sm.load()
 
 # --- Keyword Lists for PhraseMatcher ---
 SKILLS_LIST = sorted(list(set([
@@ -162,154 +155,78 @@ def _extract_location(doc) -> str | None:
 
     return None
 def _extract_contact_number(doc) -> str | None:
-    """Extracts the contact number from the spaCy Doc, supporting Indian and international formats."""
-    text = doc.text or ""
+    """Extracts the contact number from the spaCy Doc."""
+    matcher = Matcher(nlp.vocab)
+    pattern = [{"TEXT": {"REGEX": r"(\(?\d{3}\)?[-.\s]?)?(\d{3}[-.\s]?\d{4})"}}]
+    matcher.add("PHONE_NUMBER", [pattern])
     
-    # Try to find phone numbers using regex patterns
-    # Pattern for Indian phone: +91-XXXXX-XXXXX or 91XXXXXXXXXX or +91 XXXXX XXXXX
-    patterns = [
-        r"\+91[\s-]?\d{5}[\s-]?\d{5}",  # +91-XXXXX-XXXXX
-        r"\+91[\s-]?\d{4}[\s-]?\d{6}",  # +91-XXXX-XXXXXX
-        r"\d{10}",  # 10-digit without country code
-        r"\+1\s?\d{3}[\s-]?\d{3}[\s-]?\d{4}",  # US format
-    ]
-    
-    for pattern in patterns:
-        match = re.search(pattern, text)
-        if match:
-            return match.group(0).strip()
+    matches = matcher(doc)
+    for _, start, end in matches:
+        return doc[start:end].text
     return None
 
 def _extract_skills(full_text: str) -> list:
-    """Extracts skills by searching the full text of the resume with flexible matching."""
+    """Extracts skills by searching the full text of the resume."""
     skills = set()
     full_text_lower = full_text.lower()
     
     for skill_item in SKILLS_LIST:
         # Create a more flexible regex pattern for multi-word skills
-        # Allow hyphens and spaces to be optional/interchangeable
-        escaped_skill = re.escape(skill_item)
-        pattern = r"\b" + escaped_skill.replace(r"\ ", r"[\s\-]?") + r"\b"
+        pattern = r"\b" + re.escape(skill_item).replace(r"\ ", r"[\s-]?") + r"\b"
         
-        if re.search(pattern, full_text_lower, re.IGNORECASE):
+        if re.search(pattern, full_text_lower):
             skills.add(skill_item.lower())
-    
-    # Also try to extract skills from common phrases like "Skills:" sections
-    skills_section_patterns = [
-        r"skills?[:\-]?\s*([^\n]+)",
-        r"technical skills?[:\-]?\s*([^\n]+)",
-        r"core competencies[:\-]?\s*([^\n]+)",
-    ]
-    
-    for pattern in skills_section_patterns:
-        matches = re.finditer(pattern, full_text, re.IGNORECASE | re.MULTILINE)
-        for match in matches:
-            skills_text = match.group(1)
-            # Split by comma, slash, or other delimiters
-            for item in re.split(r"[,/;]", skills_text):
-                item_clean = item.strip().lower()
-                # Check if any known skill matches
-                for skill in SKILLS_LIST:
-                    if skill.lower() in item_clean or item_clean in skill.lower():
-                        skills.add(skill.lower())
             
     return list(skills)
 
 
 def _extract_education(doc) -> list:
-    """Extracts education from the spaCy Doc and text patterns."""
-    text = doc.text or ""
+    """Extracts education from the spaCy Doc."""
+    matcher = PhraseMatcher(nlp.vocab, attr="LOWER")
+    patterns = [nlp.make_doc(text) for text in EDUCATION_KEYWORDS]
+    matcher.add("EDUCATION", patterns)
+    
+    matches = matcher(doc)
     education = set()
-    
-    # Try PhraseMatcher for known education keywords
-    try:
-        nlp_obj = _get_nlp()
-        if nlp_obj:
-            matcher = PhraseMatcher(nlp_obj.vocab, attr="LOWER")
-            patterns = [nlp_obj.make_doc(ed_text) for ed_text in EDUCATION_KEYWORDS]
-            matcher.add("EDUCATION", patterns)
-            
-            matches = matcher(doc)
-            for _, start, end in matches:
-                education.add(doc[start:end].text)
-    except Exception:
-        pass
-    
-    # Also search for education patterns in text
-    edu_patterns = [
-        r"education[:\-]?\s*([^\n]+)",
-        r"(?:bachelor|master|phd|b\.?tech|m\.?tech|b\.?sc|m\.?sc)[^\n]*",
-    ]
-    
-    for pattern in edu_patterns:
-        matches = re.finditer(pattern, text, re.IGNORECASE | re.MULTILINE)
-        for match in matches:
-            edu_item = match.group(1) if match.lastindex else match.group(0)
-            edu_item = edu_item.strip()
-            if edu_item and len(edu_item) < 150:
-                education.add(edu_item)
-    
+    for _, start, end in matches:
+        education.add(doc[start:end].text)
     return list(education)
 
 def _extract_job_title(doc) -> str | None:
-    """Extracts job title from the spaCy Doc and text patterns."""
-    text = doc.text or ""
+    """Extracts job title from the spaCy Doc."""
+    matcher = PhraseMatcher(nlp.vocab, attr="LOWER")
+    patterns = [nlp.make_doc(text) for text in JOB_TITLES_LIST]
+    matcher.add("JOB_TITLE", patterns)
     
-    # Try regex patterns from job titles list
-    for job_title in JOB_TITLES_LIST:
-        pattern = r"\b" + re.escape(job_title) + r"\b"
-        if re.search(pattern, text, re.IGNORECASE):
-            return job_title
-    
-    # Try to extract from "Experience" or "Work Experience" sections
-    exp_pattern = r"(?:work experience|experience)[:\-]?\s*([^\n]+)"
-    match = re.search(exp_pattern, text, re.IGNORECASE | re.MULTILINE)
-    if match:
-        # Extract the first line which usually contains the job title
-        job_line = match.group(1).strip()
-        # Clean up common markers
-        job_line = re.sub(r"^[-•*]", "", job_line).strip()
-        if job_line and len(job_line) < 100:  # Reasonable length for a job title
-            return job_line
-    
+    matches = matcher(doc)
+    if matches:
+        _, start, end = matches[0]
+        return doc[start:end].text
     return None
 
 
 def _extract_experience(doc) -> int:
-    """Extracts total years of experience from the spaCy Doc and text patterns."""
-    text = doc.text or ""
-    years = []
-    
-    # Try regex patterns first for flexible matching
-    # Pattern: "X years" or "X+ years" or "X-Y years"
-    patterns = [
-        r"(\d+)\+?\s*(?:years?|yrs?|year|yr)",  # "5 years", "5+ years", "5yr"
-        r"experience[:\-]?\s*(\d+)\s*(?:years?|yrs?)",  # "Experience: 5 years"
-        r"total\s+experience[:\-]?\s*(\d+)",  # "Total experience: 5"
-        r"\(\s*(\d+)\s*(?:years?|yrs?)\s*\)",  # "(5 years)"
+    """Extracts total years of experience from the spaCy Doc."""
+    matcher = Matcher(nlp.vocab)
+    pattern = [
+        {"LIKE_NUM": True},
+        {"OP": "+", "TEXT": {"IN": ["+", "years", "year", "yrs", "yr"]}},
+        {"OP": "*", "LOWER": {"IN": ["of", "in", "with"]}},
+        {"OP": "*", "LOWER": "experience"}
     ]
+    matcher.add("EXPERIENCE", [pattern])
     
-    for pattern in patterns:
-        matches = re.finditer(pattern, text, re.IGNORECASE)
-        for match in matches:
-            try:
-                year_count = int(match.group(1))
-                if 0 < year_count < 70:  # Reasonable experience range
-                    years.append(year_count)
-            except (ValueError, IndexError):
-                pass
-    
-    # Also parse year ranges like "2020-2024"
-    date_pattern = r"(\d{4})\s*[–\-]\s*(\d{4})"
-    matches = re.finditer(date_pattern, text)
-    for match in matches:
-        try:
-            start_year = int(match.group(1))
-            end_year = int(match.group(2))
-            if end_year > start_year > 1900 and end_year < 2100:
-                years.append(end_year - start_year)
-        except ValueError:
-            pass
+    matches = matcher(doc)
+    years = []
+    for _, start, end in matches:
+        span = doc[start:end]
+        for token in span:
+            if token.like_num:
+                try:
+                    years.append(int(token.text))
+                    break
+                except ValueError:
+                    continue
     
     return max(years) if years else 0
 
@@ -317,8 +234,6 @@ def parse_resume(file_path: str) -> Resume:
     """
     Parses a resume from a PDF file and extracts key information.
     """
-    nlp = _get_nlp()  # Get the model (lazy-loaded on first call)
-    
     full_text = ""
     with pdfplumber.open(file_path) as pdf:
         for page in pdf.pages:
